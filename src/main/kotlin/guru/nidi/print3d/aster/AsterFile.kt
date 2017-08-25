@@ -8,10 +8,11 @@ import guru.nidi.print3d.aster.Slot.TimestampSlot
 import java.io.File
 import java.io.RandomAccessFile
 
-class AsterFile(basedir: File, val scale: Int, val sourceProvider: PixelSourceProvider, val useCache: Boolean, val minTime: Long = System.currentTimeMillis()) : AutoCloseable {
+class AsterFile(basedir: File, val scale: Int, val sourceProvider: PixelSourceProvider?, val useCache: Boolean,
+                val minTime: Long = System.currentTimeMillis(), val updateOnly: Boolean = false) : AutoCloseable {
     private val resolution = 3600 / scale
     private val file = File(basedir, "aster-$resolution.ast")
-    private val raf = RandomAccessFile(file, "rw")
+    private val raf = RandomAccessFile(file, if (sourceProvider == null) "r" else "rw")
     private val slots = Slots(raf, file.length() > 0, 2 * (resolution + 1) * (resolution + 1))
 
     val coordStep = 1.0 / resolution
@@ -37,7 +38,7 @@ class AsterFile(basedir: File, val scale: Int, val sourceProvider: PixelSourcePr
 
     private fun getPixel(lat: Int, lng: Int, x: Int, y: Int): Short {
         fun eval(slot: Slot): Short = when (slot) {
-            is PosSlot -> {
+            is PosSlot -> if (updateOnly) 0 else {
                 if (useCache) {
                     slots.pageToRead(slot).getShort(dataPos(x, y))
                 } else {
@@ -51,7 +52,7 @@ class AsterFile(basedir: File, val scale: Int, val sourceProvider: PixelSourcePr
     }
 
     private fun importTile(lat: Int, lng: Int): Slot {
-        val source = sourceProvider.sourceFor(lat, lng)?.let { ScalingPixelSource(it, scale) }
+        val source = sourceProvider?.sourceFor(lat, lng)?.let { ScalingPixelSource(it, scale) }
         return if (source != null) doImportTile(lat, lng, source)
         else {
             val slot = TimestampSlot(System.currentTimeMillis())
