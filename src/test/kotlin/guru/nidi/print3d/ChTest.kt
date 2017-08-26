@@ -4,7 +4,7 @@ import com.vividsolutions.jts.geom.*
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier
 import guru.nidi.print3d.aster.AsterFile
 import guru.nidi.print3d.aster.AsterZipPixelSourceProvider
-import guru.nidi.print3d.data.Point
+import guru.nidi.print3d.csg.Vector
 import guru.nidi.print3d.data.StlBinaryWriter
 import io.kotlintest.specs.StringSpec
 import org.geotools.data.FileDataStoreFinder
@@ -21,8 +21,8 @@ class ChTest : StringSpec() {
                 val features = featureSource.getFeatures(CQL.toFilter("ISO2 = '$iso'")).features()
                 val ch = features.next()
                 val geo = ch.defaultGeometryProperty.value as Geometry
-//                val env = geo.envelopeInternal
-                val env = Envelope(-180.0, 179.0, -83.0, 83.0)
+                val env = geo.envelopeInternal
+//                val env = Envelope(-180.0, 179.0, -83.0, 83.0)
 
                 val file = File("target/$iso-$scale-${dh.toInt()}.stl")
                 if (file.exists() && !overwrite) return
@@ -34,7 +34,7 @@ class ChTest : StringSpec() {
                     fun lng(v: Double) = (v - (env.maxX + env.minX) / 2) * 20
 
                     fun lat(v: Double) = (v - (env.maxY + env.minY) / 2) * 20
-                    fun poin(x: Double, y: Double, z: Double) = Point(lng(x), lat(y), z / dh)
+                    fun poin(x: Double, y: Double, z: Double) = Vector(lng(x), lat(y), z / dh)
                     fun point2(ll: LatLng, z: Double) = poin(ll.lng, ll.lat, z)
                     fun point2(ll: LatLng, z: Int) = poin(ll.lng, ll.lat, z.toDouble())
                     fun point(c: Coordinate, z: Double) = poin(c.x, c.y, z)
@@ -58,12 +58,12 @@ class ChTest : StringSpec() {
 //                            val b = LatLng(coord[next].y, coord[next].x)
 //                            val ha = aster.getPixel(a).toDouble()
 //                            val hb = aster.getPixel(b).toDouble()
-//                            w.writeTriangle(poin(a, ha), poin(b, 0.0), poin(a, 0.0))
-//                            w.writeTriangle(poin(a, ha), poin(b, hb), poin(b, 0.0))
+//                            w.write(poin(a, ha), poin(b, 0.0), poin(a, 0.0))
+//                            w.write(poin(a, ha), poin(b, hb), poin(b, 0.0))
 //                        }
 //
 //                        triangulate(polygon.exteriorRing.coordinates.asList()).forEach {
-//                            w.writeTriangle(poin(it.p0, 0.0), poin(it.p1, 0.0), poin(it.p2, 0.0))
+//                            w.write(poin(it.p0, 0.0), poin(it.p1, 0.0), poin(it.p2, 0.0))
 //                        }
 //
 //                    }
@@ -77,9 +77,9 @@ class ChTest : StringSpec() {
                         println("$y of ${ps.size}")
                         for (x in 0 until ps[y].size) {
                             val p = LatLng(env.minY + y * aster.coordStep, env.minX + x * aster.coordStep)
-//                            if (simple.contains(geo.factory.createPoint(Coordinate(p.lng, p.lat)))) {
+                            if (simple.contains(geo.factory.createPoint(Coordinate(p.lng, p.lat)))) {
                                 ps[y][x] = aster.getPixel(p)
-//                            }
+                            }
                         }
                     }
 
@@ -95,18 +95,18 @@ class ChTest : StringSpec() {
                             val isIn = a > Int.MIN_VALUE && b > Int.MIN_VALUE && c > Int.MIN_VALUE && d > Int.MIN_VALUE
                             val p = LatLng(env.minY + y * aster.coordStep, env.minX + x * aster.coordStep)
                             if (isIn) {
-                                w.writeTriangle(point2(p, a), point2(p + dd, d), point2(p + db, b))
-                                w.writeTriangle(point2(p, a), point2(p + dc, c), point2(p + dd, d))
-                                w.writeTriangle(point2(p, bottom), point2(p + db, bottom), point2(p + dd, bottom))
-                                w.writeTriangle(point2(p, bottom), point2(p + dd, bottom), point2(p + dc, bottom))
+                                w.write(point2(p, a), point2(p + dd, d), point2(p + db, b))
+                                w.write(point2(p, a), point2(p + dc, c), point2(p + dd, d))
+                                w.write(point2(p, bottom), point2(p + db, bottom), point2(p + dd, bottom))
+                                w.write(point2(p, bottom), point2(p + dd, bottom), point2(p + dc, bottom))
                                 if (!wasIn) {
-                                    w.writeTriangle(point2(p, a), point2(p + db, b), point2(p + db, bottom))
-                                    w.writeTriangle(point2(p, a), point2(p + db, bottom), point2(p, bottom))
+                                    w.write(point2(p, a), point2(p + db, b), point2(p + db, bottom))
+                                    w.write(point2(p, a), point2(p + db, bottom), point2(p, bottom))
                                 }
                             } else {
                                 if (wasIn) {
-                                    w.writeTriangle(point2(p, a), point2(p + db, bottom), point2(p + db, b))
-                                    w.writeTriangle(point2(p, a), point2(p, bottom), point2(p + db, bottom))
+                                    w.write(point2(p, a), point2(p + db, bottom), point2(p + db, b))
+                                    w.write(point2(p, a), point2(p, bottom), point2(p + db, bottom))
                                 }
                             }
                             wasIn = isIn
@@ -124,13 +124,13 @@ class ChTest : StringSpec() {
                             val p = LatLng(env.minY + y * aster.coordStep, env.minX + x * aster.coordStep)
                             if (isIn) {
                                 if (!wasIn) {
-                                    w.writeTriangle(point2(p, a), point2(p + dc, bottom), point2(p + dc, c))
-                                    w.writeTriangle(point2(p, a), point2(p, bottom), point2(p + dc, bottom))
+                                    w.write(point2(p, a), point2(p + dc, bottom), point2(p + dc, c))
+                                    w.write(point2(p, a), point2(p, bottom), point2(p + dc, bottom))
                                 }
                             } else {
                                 if (wasIn) {
-                                    w.writeTriangle(point2(p, a), point2(p + dc, c), point2(p + dc, bottom))
-                                    w.writeTriangle(point2(p, a), point2(p + dc, bottom), point2(p, bottom))
+                                    w.write(point2(p, a), point2(p + dc, c), point2(p + dc, bottom))
+                                    w.write(point2(p, a), point2(p + dc, bottom), point2(p, bottom))
                                 }
                             }
                             wasIn = isIn
@@ -141,11 +141,11 @@ class ChTest : StringSpec() {
 //                    while (p.lat < env.maxY) {
 //                        p = p.copy(lng = env.minX)
 //                        while (p.lng < env.maxX) {
-//                            if (s.contains(geo.factory.createPoint(Coordinate(p.lng, p.lat)))) {
+//                            if (s.contains(geo.factory.createVector(Coordinate(p.lng, p.lat)))) {
 //                                val pa = point(p + da)
 //                                val pd = point(p + dd)
-//                                w.writeTriangle(pa, pd, point(p + db))
-//                                w.writeTriangle(pa, point(p + dc), pd)
+//                                w.write(pa, pd, point(p + db))
+//                                w.write(pa, point(p + dc), pd)
 //                                val i = ((p.lng - env.minX) / aster.coordStep).toInt()
 //                            }
 //                            p += LatLng(0.0, aster.coordStep)

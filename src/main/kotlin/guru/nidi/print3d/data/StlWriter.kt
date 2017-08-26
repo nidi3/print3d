@@ -1,5 +1,6 @@
 package guru.nidi.print3d.data
 
+import guru.nidi.print3d.csg.Vector
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
@@ -12,7 +13,7 @@ class StlWriter(file: File, val name: String) : AutoCloseable {
         out.println("solid $name")
     }
 
-    fun writeTriangle(a: Point, b: Point, c: Point) {
+    fun writeTriangle(a: Vector, b: Vector, c: Vector) {
         out.println("facet normal 0 0 0")
         out.println("outer loop")
         out.println("vertex ${a.x} ${a.y} ${a.z}")
