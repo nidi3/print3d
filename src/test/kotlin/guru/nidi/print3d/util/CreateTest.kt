@@ -16,13 +16,13 @@ class CreateTest : StringSpec() {
 //                    out.write(z.applyTo(cube(1.0, 1.0, 30.0)))
                 val f = 8
                 val r = 10.0
-                val ri = ring(r, r + .2, .2)
+                val ri = ring(origin, r, .2, .2)
                 out.write(ri)
                 for (i in 1 until f) {
                     val a = i * PI / 2 / f
                     val r1 = r * cos(a)
-                    out.write(translate(0.0, 0.0, r * sin(a)).applyTo(ring(r1, r1 + .2, .2)))
-                    out.write(translate(0.0, 0.0, -r * sin(a)).applyTo(ring(r1, r1 + .2, .2)))
+                    out.write(translate(0.0, 0.0, r * sin(a)).applyTo(ring(origin, r1, .2, .2)))
+                    out.write(translate(0.0, 0.0, -r * sin(a)).applyTo(ring(origin, r1, .2, .2)))
                 }
 //                    out.write(r)
 

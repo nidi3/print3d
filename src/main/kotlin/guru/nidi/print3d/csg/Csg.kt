@@ -28,7 +28,7 @@ class Csg(val polygons: List<Polygon>) {
     fun inverse() = Csg(polygons.map { it.flip() })
 }
 
-fun cube(center: Vector = Vector(0.0, 0.0, 0.0), radius: Vector = Vector(1.0, 1.0, 1.0),
+fun cube(center: Vector = origin, radius: Vector = Vector(1.0, 1.0, 1.0),
          props: Map<String, *> = mapOf<String, String>()): Csg {
     return Csg(listOf(
             listOf(listOf(0, 4, 6, 2), listOf(-1, 0, 0)),
@@ -49,12 +49,10 @@ fun cube(center: Vector = Vector(0.0, 0.0, 0.0), radius: Vector = Vector(1.0, 1.
             })
 }
 
-fun sphere(center: Vector = Vector(0.0, 0.0, 0.0), radius: Double = 1.0, slices: Int = 32, stacks: Int = 16,
+fun sphere(center: Vector = origin, radius: Double = 1.0, slices: Int = 32, stacks: Int = 16,
            props: Map<String, *> = mapOf<String, String>()): Csg {
-    fun vertex(th: Double, ph: Double): Vertex {
-        val theta = th * PI * 2;
-        val phi = ph * PI;
-        val dir = Vector(cos(theta) * sin(phi), cos(phi), sin(theta) * sin(phi))
+    fun vertex(phi: Double, theta: Double): Vertex {
+        val dir = Vector.ofSpherical(-1.0, theta * PI, phi * PI * 2)
         return Vertex(center + dir * radius, dir)
     }
 
@@ -103,11 +101,13 @@ fun cylinder(start: Vector = Vector(0.0, -1.0, 0.0), end: Vector = Vector(0.0, 1
     return Csg(polygons)
 }
 
-fun ring(r1: Double, r2: Double, h: Double, slices: Int = 32): Csg {
-    fun vertex(r: Double, a: Double, b: Double, norm: Vector) = Vertex(Vector(r * sin(b) * cos(a), r * sin(b) * sin(a), r * cos(b)), norm)
+fun ring(center: Vector = origin, radius: Double = 1.0, r: Double = 1.0, h: Double = 1.0, slices: Int = 32): Csg {
+    fun vertex(r: Double, a: Double, b: Double, norm: Vector) =
+            Vertex(center + Vector.ofSpherical(r, b, a), norm)
+
     fun vertex(r: Double, a: Double, b: Double, dir: Int): Vertex {
-        val v = Vector(r * sin(b) * cos(a), r * sin(b) * sin(a), r * cos(b))
-        return Vertex(v, v * dir.toDouble())
+        val v = Vector.ofSpherical(r, b, a)
+        return Vertex(v + center, v * dir.toDouble())
     }
 
     val res = mutableListOf<Polygon>()
@@ -115,15 +115,15 @@ fun ring(r1: Double, r2: Double, h: Double, slices: Int = 32): Csg {
     var a = 0.0
     val down = Vector(0.0, 0.0, 1.0)
     while (a < 2 * PI + da / 2) {
-        var b = (PI - h / r2) / 2
-        res.add(Polygon(vertex(r1, a, b, down), vertex(r2, a, b,down), vertex(r2, a + da, b, down), vertex(r1, a + da, b, down)))
-        val db = h / r2 //todo use delta
-        while (b < (PI + h / r2) / 2) {
-            res.add(Polygon(vertex(r1, a, b, -1), vertex(r1, a + da, b, -1), vertex(r1, a + da, b + db, -1), vertex(r1, a, b + db, -1)))
-            res.add(Polygon(vertex(r2, a, b, 1), vertex(r2, a, b + db, 1), vertex(r2, a + da, b + db, 1), vertex(r2, a + da, b, 1)))
+        var b = (PI - h / radius) / 2
+        res.add(Polygon(vertex(radius, a, b, down), vertex(radius + r, a, b, down), vertex(radius + r, a + da, b, down), vertex(radius, a + da, b, down)))
+        val db = h / radius
+        while (b < (PI + h / radius) / 2) {
+            res.add(Polygon(vertex(radius, a, b, -1), vertex(radius, a + da, b, -1), vertex(radius, a + da, b + db, -1), vertex(radius, a, b + db, -1)))
+            res.add(Polygon(vertex(radius + r, a, b, 1), vertex(radius + r, a, b + db, 1), vertex(radius + r, a + da, b + db, 1), vertex(radius + r, a + da, b, 1)))
             b += db
         }
-        res.add(Polygon(vertex(r1, a, b, -down), vertex(r1, a + da, b, -down), vertex(r2, a + da, b, -down), vertex(r2, a, b, -down)))
+        res.add(Polygon(vertex(radius, a, b, -down), vertex(radius, a + da, b, -down), vertex(radius + r, a + da, b, -down), vertex(radius + r, a, b, -down)))
         a += da
     }
     return Csg(res)

@@ -3,6 +3,11 @@ package guru.nidi.print3d.csg
 import java.lang.Math.sqrt
 
 data class Vector(val x: Double, val y: Double, val z: Double) {
+    companion object {
+        fun ofSpherical(r: Double, theta: Double, phi: Double) =
+                Vector(r * Math.sin(theta) * Math.cos(phi), r * Math.sin(theta) * Math.sin(phi), r * Math.cos(theta))
+    }
+
     operator fun unaryMinus() = Vector(-x, -y, -z)
     operator fun plus(a: Vector) = Vector(x + a.x, y + a.y, z + a.z)
     operator fun minus(a: Vector) = Vector(x - a.x, y - a.y, z - a.z)
@@ -14,3 +19,5 @@ data class Vector(val x: Double, val y: Double, val z: Double) {
     fun unit() = this / length()
     fun interpolate(a: Vector, t: Double) = this + (a - this) * t
 }
+
+val origin = Vector(0.0, 0.0, 0.0)
