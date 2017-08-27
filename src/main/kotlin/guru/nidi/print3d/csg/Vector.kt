@@ -19,5 +19,3 @@ data class Vector(val x: Double, val y: Double, val z: Double) {
     fun unit() = this / length()
     fun interpolate(a: Vector, t: Double) = this + (a - this) * t
 }
-
-val origin = Vector(0.0, 0.0, 0.0)

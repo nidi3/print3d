@@ -8,15 +8,15 @@ class AffineTransform private constructor(val v00: Double, val v01: Double, val 
             0.0, 1.0, 0.0, 0.0,
             0.0, 0.0, 1.0, 0.0)
 
-    fun translate(x: Double, y: Double, z: Double) = AffineTransform(
-            v00, v01, v02, v03 + x,
-            v10, v11, v12, v13 + y,
-            v20, v21, v22, v23 + z)
+    fun translate(v: Vector) = AffineTransform(
+            v00, v01, v02, v03 + v.x,
+            v10, v11, v12, v13 + v.y,
+            v20, v21, v22, v23 + v.z)
 
-    fun scale(x: Double, y: Double, z: Double) = AffineTransform(
-            v00 * x, v01, v02, v03,
-            v10, v11 * y, v12, v13,
-            v20, v21, v22 * z, v23)
+    fun scale(v: Vector) = AffineTransform(
+            v00 * v.x, v01, v02, v03,
+            v10, v11 * v.y, v12, v13,
+            v20, v21, v22 * v.z, v23)
 
     fun rotateX(a: Double) = AffineTransform(
             v00, v01 * Math.cos(a) + v02 * Math.sin(a), -v01 * Math.sin(a) + v02 * Math.cos(a), v03,
@@ -49,9 +49,3 @@ class AffineTransform private constructor(val v00: Double, val v01: Double, val 
 
     fun applyTo(t: Csg) = Csg(t.polygons.map { applyTo(it) })
 }
-
-fun translate(x: Double, y: Double, z: Double) = AffineTransform().translate(x, y, z)
-fun scale(x: Double, y: Double, z: Double) = AffineTransform().scale(x, y, z)
-fun rotateX(a: Double) = AffineTransform().rotateX(a)
-fun rotateY(a: Double) = AffineTransform().rotateY(a)
-fun rotateZ(a: Double) = AffineTransform().rotateZ(a)

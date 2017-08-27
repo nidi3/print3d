@@ -3,21 +3,25 @@ package guru.nidi.print3d.csg
 import java.lang.Math.*
 
 class Csg(val polygons: List<Polygon>) {
-    fun union(csg: Csg): Csg {
+    infix fun union(csg: Csg): Csg {
         val b = Node(csg.polygons)
         val a = Node(polygons).clipTo(b)
         val b2 = b.clipTo(a).invert().clipTo(a).invert()
         return Csg(a.combine(b2).allPolygons())
     }
 
-    fun subtract(csg: Csg): Csg {
+    operator fun plus(csg: Csg) = this union csg
+
+    infix fun subtract(csg: Csg): Csg {
         val b = Node(csg.polygons)
         val a = Node(polygons).invert().clipTo(b)
         val b1 = b.clipTo(a).invert().clipTo(a).invert()
         return Csg(a.combine(b1).invert().allPolygons())
     }
 
-    fun intersect(csg: Csg): Csg {
+    operator fun minus(csg: Csg) = this subtract csg
+
+    infix fun intersect(csg: Csg): Csg {
         val a = Node(polygons).invert()
         val b = Node(csg.polygons).clipTo(a).invert()
         val a1 = a.clipTo(b)
@@ -25,10 +29,12 @@ class Csg(val polygons: List<Polygon>) {
         return Csg(a1.combine(b2).invert().allPolygons())
     }
 
+    operator fun times(csg: Csg) = this intersect csg
+
     fun inverse() = Csg(polygons.map { it.flip() })
 }
 
-fun cube(center: Vector = origin, radius: Vector = Vector(1.0, 1.0, 1.0),
+fun cube(center: Vector = Vector(1.0, 1.0, 1.0), radius: Vector = Vector(1.0, 1.0, 1.0),
          props: Map<String, *> = mapOf<String, String>()): Csg {
     return Csg(listOf(
             listOf(listOf(0, 4, 6, 2), listOf(-1, 0, 0)),
@@ -49,7 +55,7 @@ fun cube(center: Vector = origin, radius: Vector = Vector(1.0, 1.0, 1.0),
             })
 }
 
-fun sphere(center: Vector = origin, radius: Double = 1.0, slices: Int = 32, stacks: Int = 16,
+fun sphere(center: Vector = Vector(1.0, 1.0, 1.0), radius: Double = 1.0, slices: Int = 32, stacks: Int = 16,
            props: Map<String, *> = mapOf<String, String>()): Csg {
     fun vertex(phi: Double, theta: Double): Vertex {
         val dir = Vector.ofSpherical(-1.0, theta * PI, phi * PI * 2)
@@ -101,7 +107,7 @@ fun cylinder(start: Vector = Vector(0.0, -1.0, 0.0), end: Vector = Vector(0.0, 1
     return Csg(polygons)
 }
 
-fun ring(center: Vector = origin, radius: Double = 1.0, r: Double = 1.0, h: Double = 1.0, slices: Int = 32): Csg {
+fun ring(center: Vector = Vector(1.0, 1.0, 1.0), radius: Double = 1.0, r: Double = 1.0, h: Double = 1.0, slices: Int = 32): Csg {
     fun vertex(r: Double, a: Double, b: Double, norm: Vector) =
             Vertex(center + Vector.ofSpherical(r, b, a), norm)
 
