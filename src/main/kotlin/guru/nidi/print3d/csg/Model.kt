@@ -41,7 +41,22 @@ class Model {
     fun Csg.rotateY(a: Double) = AffineTransform().rotateY(a).applyTo(this)
     fun Csg.rotateZ(a: Double) = AffineTransform().rotateZ(a).applyTo(this)
 
-    fun addToModel(csg: Csg) = csgs.add(transform.applyTo(csg))
+    fun cube(center: Vector = Vector(1.0, 1.0, 1.0), radius: Vector = Vector(1.0, 1.0, 1.0),
+             props: Map<String, *> = mapOf<String, String>()) =
+            transform.applyTo(Csg.cube(center, radius, props))
+
+    fun sphere(center: Vector = Vector(1.0, 1.0, 1.0), radius: Double = 1.0, slices: Int = 32, stacks: Int = 16,
+               props: Map<String, *> = mapOf<String, String>()) =
+            transform.applyTo(Csg.sphere(center, radius, slices, stacks, props))
+
+    fun cylinder(start: Vector = Vector(0.0, -1.0, 0.0), end: Vector = Vector(0.0, 1.0, 0.0), radius: Double = 1.0,
+                 slices: Int = 32, props: Map<String, *> = mapOf<String, String>()) =
+            transform.applyTo(Csg.cylinder(start, end, radius, slices, props))
+
+    fun ring(center: Vector = Vector(1.0, 1.0, 1.0), radius: Double = 1.0, r: Double = 1.0, h: Double = 1.0, slices: Int = 32) =
+            transform.applyTo(Csg.ring(center, radius, r, h, slices))
+
+    fun addToModel(csg: Csg) = csgs.add(csg)
 
     fun write(f: File, name: String) {
         StlBinaryWriter(f, name).use { out ->

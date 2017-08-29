@@ -1,7 +1,6 @@
 package guru.nidi.print3d.util
 
 import guru.nidi.print3d.csg.Model
-import guru.nidi.print3d.csg.ring
 import io.kotlintest.specs.StringSpec
 import java.io.File
 import java.lang.Math.*

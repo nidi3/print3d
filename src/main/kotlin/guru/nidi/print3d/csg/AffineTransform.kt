@@ -1,47 +1,47 @@
 package guru.nidi.print3d.csg
 
-class AffineTransform private constructor(val v00: Double, val v01: Double, val v02: Double, val v03: Double,
-                                          val v10: Double, val v11: Double, val v12: Double, val v13: Double,
-                                          val v20: Double, val v21: Double, val v22: Double, val v23: Double) {
+class AffineTransform private constructor(val m00: Double, val m01: Double, val m02: Double, val m03: Double,
+                                          val m10: Double, val m11: Double, val m12: Double, val m13: Double,
+                                          val m20: Double, val m21: Double, val m22: Double, val m23: Double) {
     constructor() : this(
             1.0, 0.0, 0.0, 0.0,
             0.0, 1.0, 0.0, 0.0,
             0.0, 0.0, 1.0, 0.0)
 
     fun translate(v: Vector) = AffineTransform(
-            v00, v01, v02, v03 + v.x,
-            v10, v11, v12, v13 + v.y,
-            v20, v21, v22, v23 + v.z)
+            m00, m01, m02, m03 + m00 * v.x + m01 * v.y + m02 * v.z,
+            m10, m11, m12, m13 + m10 * v.x + m11 * v.y + m12 * v.z,
+            m20, m21, m22, m23 + m20 * v.x + m21 * v.y + m22 * v.z)
 
     fun scale(v: Vector) = AffineTransform(
-            v00 * v.x, v01, v02, v03,
-            v10, v11 * v.y, v12, v13,
-            v20, v21, v22 * v.z, v23)
+            m00 * v.x, m01 * v.y, m02 * v.z, m03,
+            m10 * v.x, m11 * v.y, m12 * v.z, m13,
+            m20 * v.x, m21 * v.y, m22 * v.z, m23)
 
     fun rotateX(a: Double) = AffineTransform(
-            v00, v01 * Math.cos(a) + v02 * Math.sin(a), -v01 * Math.sin(a) + v02 * Math.cos(a), v03,
-            v10, v11 * Math.cos(a) + v12 * Math.sin(a), -v11 * Math.sin(a) + v12 * Math.cos(a), v13,
-            v20, v21 * Math.cos(a) + v22 * Math.sin(a), -v21 * Math.sin(a) + v22 * Math.cos(a), v23)
+            m00, m01 * Math.cos(a) + m02 * Math.sin(a), -m01 * Math.sin(a) + m02 * Math.cos(a), m03,
+            m10, m11 * Math.cos(a) + m12 * Math.sin(a), -m11 * Math.sin(a) + m12 * Math.cos(a), m13,
+            m20, m21 * Math.cos(a) + m22 * Math.sin(a), -m21 * Math.sin(a) + m22 * Math.cos(a), m23)
 
     fun rotateY(a: Double) = AffineTransform(
-            v00 * Math.cos(a) + v02 * Math.sin(a), v01, -v00 * Math.sin(a) + v02 * Math.cos(a), v03,
-            v10 * Math.cos(a) + v12 * Math.sin(a), v11, -v10 * Math.sin(a) + v12 * Math.cos(a), v13,
-            v20 * Math.cos(a) + v22 * Math.sin(a), v21, -v20 * Math.sin(a) + v22 * Math.cos(a), v23)
+            m00 * Math.cos(a) + m02 * Math.sin(a), m01, -m00 * Math.sin(a) + m02 * Math.cos(a), m03,
+            m10 * Math.cos(a) + m12 * Math.sin(a), m11, -m10 * Math.sin(a) + m12 * Math.cos(a), m13,
+            m20 * Math.cos(a) + m22 * Math.sin(a), m21, -m20 * Math.sin(a) + m22 * Math.cos(a), m23)
 
     fun rotateZ(a: Double) = AffineTransform(
-            v00 * Math.cos(a) - v01 * Math.sin(a), v00 * Math.sin(a) + v01 * Math.cos(a), v02, v03,
-            v10 * Math.cos(a) - v11 * Math.sin(a), v10 * Math.sin(a) + v11 * Math.cos(a), v12, v13,
-            v20 * Math.cos(a) - v21 * Math.sin(a), v20 * Math.sin(a) + v21 * Math.cos(a), v22, v23)
+            m00 * Math.cos(a) - m01 * Math.sin(a), m00 * Math.sin(a) + m01 * Math.cos(a), m02, m03,
+            m10 * Math.cos(a) - m11 * Math.sin(a), m10 * Math.sin(a) + m11 * Math.cos(a), m12, m13,
+            m20 * Math.cos(a) - m21 * Math.sin(a), m20 * Math.sin(a) + m21 * Math.cos(a), m22, m23)
 
-    fun applyTo(m: AffineTransform) = AffineTransform(
-            v00 * m.v00 + v01 * m.v10 + v02 * m.v20, v00 * m.v10 + v01 * m.v11 + v02 * m.v21, v00 * m.v20 + v01 * m.v21 + v02 * m.v22, v03,
-            v10 * m.v00 + v11 * m.v10 + v12 * m.v20, v10 * m.v10 + v11 * m.v11 + v12 * m.v21, v10 * m.v20 + v11 * m.v21 + v12 * m.v22, v13,
-            v20 * m.v00 + v21 * m.v10 + v22 * m.v20, v20 * m.v10 + v21 * m.v11 + v22 * m.v21, v20 * m.v20 + v21 * m.v21 + v22 * m.v22, v23)
+    fun applyTo(a: AffineTransform) = AffineTransform(
+            m00 * a.m00 + m01 * a.m10 + m02 * a.m20, m00 * a.m01 + m01 * a.m11 + m02 * a.m21, m00 * a.m02 + m01 * a.m12 + m02 * a.m22, m00 * a.m03 + m01 * a.m13 + m02 * a.m23 + m03,
+            m10 * a.m00 + m11 * a.m10 + m12 * a.m20, m10 * a.m01 + m11 * a.m11 + m12 * a.m21, m10 * a.m02 + m11 * a.m12 + m12 * a.m22, m10 * a.m03 + m11 * a.m13 + m12 * a.m23 + m13,
+            m20 * a.m00 + m21 * a.m10 + m22 * a.m20, m20 * a.m01 + m21 * a.m11 + m22 * a.m21, m20 * a.m02 + m21 * a.m12 + m22 * a.m22, m20 * a.m03 + m21 * a.m13 + m22 * a.m23 + m23)
 
     fun applyTo(p: Vector) = Vector(
-            v00 * p.x + v01 * p.y + v02 * p.z + v03,
-            v10 * p.x + v11 * p.y + v12 * p.z + v13,
-            v20 * p.x + v21 * p.y + v22 * p.z + v23)
+            m00 * p.x + m01 * p.y + m02 * p.z + m03,
+            m10 * p.x + m11 * p.y + m12 * p.z + m13,
+            m20 * p.x + m21 * p.y + m22 * p.z + m23)
 
     fun applyTo(t: Vertex) = Vertex(applyTo(t.pos), applyTo(t.normal))
 

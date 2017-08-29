@@ -1,5 +1,8 @@
 package guru.nidi.print3d.csg
 
+import java.lang.Math.floor
+import java.lang.Math.random
+
 class Node private constructor(private val polygons: MutableList<Polygon>, private var plane: Plane?,
                                private var front: Node?, private var back: Node?) {
     constructor() : this(mutableListOf<Polygon>(), null, null, null)
@@ -29,7 +32,7 @@ class Node private constructor(private val polygons: MutableList<Polygon>, priva
     fun allPolygons(): List<Polygon> =
             polygons + (front?.allPolygons() ?: listOf()) + (back?.allPolygons() ?: listOf())
 
-    fun combine(node:Node) = combine(node.allPolygons())
+    fun combine(node: Node) = combine(node.allPolygons())
 
     fun combine(polygons: List<Polygon>) = copy().build(polygons)
 
