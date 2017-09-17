@@ -5,7 +5,7 @@ import java.io.*
 import java.lang.Math.abs
 
 class StlBinaryWriter(val file: File, val name: String) : AutoCloseable {
-    private val out = DataOutputStream(FileOutputStream(file))
+    private val out = DataOutputStream(BufferedOutputStream(FileOutputStream(file)))
     private var count = 0
 
     init {
