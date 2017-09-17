@@ -1,10 +1,8 @@
 package guru.nidi.print3d.aster
 
-import guru.nidi.print3d.LatLng
-import guru.nidi.print3d.PixelSource
-import guru.nidi.print3d.PixelSourceProvider
-import guru.nidi.print3d.aster.Slot.PosSlot
-import guru.nidi.print3d.aster.Slot.TimestampSlot
+import guru.nidi.print3d.*
+import guru.nidi.print3d.aster.Page.PosPage
+import guru.nidi.print3d.aster.Page.TimestampPage
 import java.io.File
 import java.io.RandomAccessFile
 
@@ -13,7 +11,7 @@ class AsterFile(basedir: File, val scale: Int, val sourceProvider: PixelSourcePr
     private val resolution = 3600 / scale
     private val file = File(basedir, "aster-$resolution.ast")
     private val raf = RandomAccessFile(file, if (sourceProvider == null) "r" else "rw")
-    private val slots = Slots(raf, file.length() > 0, 2 * (resolution + 1) * (resolution + 1))
+    private val pages = Pages(raf, file.length() > 0, scale, useCache)
 
     val coordStep = 1.0 / resolution
 
@@ -22,10 +20,10 @@ class AsterFile(basedir: File, val scale: Int, val sourceProvider: PixelSourcePr
     fun getPixel(p: LatLng): Int = getPixel(p.lat, p.lng)
 
     internal fun getTile(lat: Int, lng: Int): Tile? {
-        val slot = slots[lat, lng]
-        return when (slot) {
-            is PosSlot -> Tile(slots.pageToRead(slot), resolution)
-            is TimestampSlot -> null
+        val page = pages[lat, lng]
+        return when (page) {
+            is PosPage -> pages.getTile(page)
+            is TimestampPage -> null
         }
     }
 
@@ -36,50 +34,26 @@ class AsterFile(basedir: File, val scale: Int, val sourceProvider: PixelSourcePr
         return getPixel(slat, slng, (resolution * (lng - slng)).toInt(), (resolution * (1 - lat + slat)).toInt()).toInt()
     }
 
-    private fun getPixel(lat: Int, lng: Int, x: Int, y: Int): Short {
-        fun eval(slot: Slot): Short = when (slot) {
-            is PosSlot -> if (updateOnly) 0 else {
-                if (useCache) {
-                    slots.pageToRead(slot).getShort(dataPos(x, y))
-                } else {
-                    raf.seek(slot.value + dataPos(x, y))
-                    raf.readShort()
-                }
-            }
-            is TimestampSlot -> if (slot.value < minTime) eval(importTile(lat, lng)) else -5000
+    private fun getPixel(lat: Int, lng: Int, x: Int, y: Int): Int {
+        fun eval(page: Page): Int = when (page) {
+            is PosPage -> if (updateOnly) 0 else pages.getTile(page).get(x, y)
+            is TimestampPage -> if (page.value < minTime) eval(importTile(lat, lng)) else -5000
         }
-        return eval(slots[lat, lng])
+        return eval(pages[lat, lng])
     }
 
-    private fun importTile(lat: Int, lng: Int): Slot {
+    private fun importTile(lat: Int, lng: Int): Page {
         val source = sourceProvider?.sourceFor(lat, lng)?.let { ScalingPixelSource(it, scale) }
         return if (source != null) doImportTile(lat, lng, source)
-        else {
-            val slot = TimestampSlot(System.currentTimeMillis())
-            slots[lat, lng] = slot
-            slot
+        else TimestampPage(System.currentTimeMillis()).also {
+            pages[lat, lng] = it
         }
     }
 
-    private fun doImportTile(lat: Int, lng: Int, source: PixelSource): Slot {
-        val newSlot = slots[lat, lng].posOrElse { raf.length() }
-        setData(newSlot, source)
-        slots[lat, lng] = newSlot
-        return newSlot
-    }
-
-    private fun setData(slot: Slot, value: PixelSource) {
-        val data = slots.pageToWrite(slot)
-        var y = 0
-        while (y < resolution + 1) {
-            value.doWithLine(y) { x, pixel ->
-                val pos = dataPos(x, y)
-                data.putShort(pos, pixel.toShort())
-            }
-            y += 1
+    private fun doImportTile(lat: Int, lng: Int, source: PixelSource): Page {
+        return pages[lat, lng].posOrElse { raf.length() }.also {
+            pages.setData(it, source)
+            pages[lat, lng] = it
         }
     }
-
-    private fun dataPos(x: Int, y: Int) = (x + (resolution + 1) * y) * 2
-
 }
