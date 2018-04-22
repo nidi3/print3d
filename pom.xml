@@ -6,7 +6,7 @@
     <parent>
         <groupId>guru.nidi</groupId>
         <artifactId>guru-nidi-parent-pom</artifactId>
-        <version>1.0.18</version>
+        <version>1.1.16</version>
         <relativePath />
     </parent>
 
@@ -20,7 +20,7 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <kotlin.version>1.1.4</kotlin.version>
+        <kotlin.version>1.2.40</kotlin.version>
     </properties>
 
     <scm>
@@ -63,7 +63,7 @@
     <dependencies>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib-jre8</artifactId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
 

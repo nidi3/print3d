@@ -10,7 +10,7 @@ internal class Slots(val raf: RandomAccessFile, exist: Boolean, val pageSize: In
     private val slotsSize = 360 * 180 * 8
     private val slots = ByteArray(slotsSize)
     private val cache = CacheBuilder.newBuilder()
-            .maximumSize(300)
+            .maximumSize(1000000000L / pageSize)
             .build(object : CacheLoader<Int, ByteBuffer>() {
                 override fun load(key: Int) =
                         raf.channel.map(FileChannel.MapMode.READ_ONLY, slotsSize + key.toLong() * pageSize, pageSize.toLong())

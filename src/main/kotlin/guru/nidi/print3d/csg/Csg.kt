@@ -63,17 +63,17 @@ fun cube(center: Vector = Vector(1.0, 1.0, 1.0), radius: Vector = Vector(1.0, 1.
 }
 
 fun sphere(center: Vector = Vector(1.0, 1.0, 1.0), radius: Double = 1.0, slices: Int = 32, stacks: Int = 16,
-           props: Map<String, *> = mapOf<String, String>()): Csg {
+           radiusFunc: ((Double, Double) -> Double)? = null, props: Map<String, *> = mapOf<String, String>()): Csg {
     fun vertex(phi: Double, theta: Double): Vertex {
         val dir = Vector.ofSpherical(-1.0, theta * PI, phi * PI * 2)
-        return Vertex(center + dir * radius, dir)
+        return Vertex(center + dir * (radiusFunc?.invoke(phi, theta) ?: radius), dir)
     }
 
     val polygons = mutableListOf<Polygon>()
     for (i in 0 until slices) {
+        val id = i.toDouble()
         for (j in 0 until stacks) {
             val vertices = mutableListOf<Vertex>()
-            val id = i.toDouble()
             val jd = j.toDouble()
             vertices.add(vertex(id / slices, jd / stacks))
             if (j > 0) vertices.add(vertex((id + 1) / slices, jd / stacks))
