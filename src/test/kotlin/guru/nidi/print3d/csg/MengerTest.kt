@@ -6,7 +6,7 @@ import java.io.File
 class MengerTest : StringSpec() {
     init {
         "create" {
-            Model().apply {
+            model {
 
                 fun menger(r: Double, level: Int): Csg {
                     var c = cube(center = unit * 30.0)
@@ -52,7 +52,7 @@ class MengerTest : StringSpec() {
                     }
 
                     step(r, level)
-                    addToModel(c)
+                    add(c)
                     return c
                 }
 

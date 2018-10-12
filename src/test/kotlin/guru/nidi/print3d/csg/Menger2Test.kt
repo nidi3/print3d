@@ -6,7 +6,7 @@ import java.io.File
 class Menger2Test : StringSpec() {
     init {
         "create" {
-            Model().apply {
+            model {
                 val mmm = cube(center = v(-2, -2, -2))
                 val mmo = cube(center = v(-2, -2, 0))
                 val mmp = cube(center = v(-2, -2, 2))
@@ -37,27 +37,27 @@ class Menger2Test : StringSpec() {
 
                 fun mosely(level: Int) {
                     if (level == 0) {
-                        addToModel(ppo)
-                        addToModel(mmo)
-                        addToModel(pmo)
-                        addToModel(mpo)
+                        add(ppo)
+                        add(mmo)
+                        add(pmo)
+                        add(mpo)
 
-                        addToModel(pop)
-                        addToModel(mom)
-                        addToModel(mop)
-                        addToModel(pom)
+                        add(pop)
+                        add(mom)
+                        add(mop)
+                        add(pom)
 
-                        addToModel(opp)
-                        addToModel(omm)
-                        addToModel(omp)
-                        addToModel(opm)
+                        add(opp)
+                        add(omm)
+                        add(omp)
+                        add(opm)
 
-                        addToModel(poo)
-                        addToModel(opo)
-                        addToModel(oop)
-                        addToModel(moo)
-                        addToModel(omo)
-                        addToModel(oom)
+                        add(poo)
+                        add(opo)
+                        add(oop)
+                        add(moo)
+                        add(omo)
+                        add(oom)
                     } else {
                         transform(scale(unit / 3.0)) {
                             transform(translate(v(6, 6, 0))) { mosely(level - 1) }
@@ -88,30 +88,30 @@ class Menger2Test : StringSpec() {
 
                 fun menger(level: Int) {
                     if (level == 0) {
-                        addToModel(ppo)
-                        addToModel(mmo)
-                        addToModel(pmo)
-                        addToModel(mpo)
+                        add(ppo)
+                        add(mmo)
+                        add(pmo)
+                        add(mpo)
 
-                        addToModel(pop)
-                        addToModel(mom)
-                        addToModel(mop)
-                        addToModel(pom)
+                        add(pop)
+                        add(mom)
+                        add(mop)
+                        add(pom)
 
-                        addToModel(opp)
-                        addToModel(omm)
-                        addToModel(omp)
-                        addToModel(opm)
+                        add(opp)
+                        add(omm)
+                        add(omp)
+                        add(opm)
 
-                        addToModel(ppp)
-                        addToModel(mmm)
+                        add(ppp)
+                        add(mmm)
 
-                        addToModel(mpp)
-                        addToModel(pmp)
-                        addToModel(ppm)
-                        addToModel(pmm)
-                        addToModel(mpm)
-                        addToModel(mmp)
+                        add(mpp)
+                        add(pmp)
+                        add(ppm)
+                        add(pmm)
+                        add(mpm)
+                        add(mmp)
                     } else {
                         transform(scale(unit / 3.0)) {
                             transform(translate(v(6, 6, 0))) { menger(level - 1) }
@@ -143,12 +143,14 @@ class Menger2Test : StringSpec() {
                     }
                 }
 
-                transform(scale(unit * 15.0)) {
-                    menger(2)
-                    write(File("target/menger-2.stl"), "menger")
+                val size = 10
+                val level = 1
+                transform(scale(unit * size.toDouble())) {
+                    menger(level)
+                    write(File("target/menger-$level-$size.stl"), "menger")
 
-//                    mosely(2)
-//                    write(File("target/mosely-2.stl"), "mosely")
+//                    mosely(level)
+//                    write(File("target/mosely-$level-$size.stl"), "mosely")
                 }
 
             }

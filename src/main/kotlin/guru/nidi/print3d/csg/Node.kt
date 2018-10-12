@@ -1,8 +1,5 @@
 package guru.nidi.print3d.csg
 
-import java.lang.Math.floor
-import java.lang.Math.random
-
 class Node private constructor(private val polygons: MutableList<Polygon>, private var plane: Plane?,
                                private var front: Node?, private var back: Node?) {
     constructor() : this(mutableListOf<Polygon>(), null, null, null)
@@ -12,7 +9,7 @@ class Node private constructor(private val polygons: MutableList<Polygon>, priva
 
     fun copy(): Node = Node(polygons.toMutableList(), plane?.copy(), front?.copy(), back?.copy())
 
-    fun invert(): Node = Node(polygons.mapTo(mutableListOf()) { it.flip() }, plane?.flip(), back?.invert(), front?.invert())
+    operator fun unaryMinus(): Node = Node(polygons.mapTo(mutableListOf()) { -it }, plane?.let { -it }, back?.let { -it }, front?.let { -it })
 
     private fun clipPolygons(polygons: List<Polygon>): MutableList<Polygon> {
         if (plane == null) return polygons.toMutableList()

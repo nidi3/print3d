@@ -22,10 +22,10 @@ class VectorTest : StringSpec() {
             Vector(1.0, 2.0, 3.0) / 2.0 shouldEqual Vector(.5, 1.0, 1.5)
         }
         "dot"{
-            Vector(1.0, 2.0, 3.0) dot Vector(2.0, 3.0, 4.0) shouldEqual 20.0
+            Vector(1.0, 2.0, 3.0) * Vector(2.0, 3.0, 4.0) shouldEqual 20.0
         }
         "cross"{
-            Vector(1.0, 2.0, 3.0) cross Vector(2.0, 3.0, 4.0) shouldEqual Vector(-1.0, 2.0, -1.0)
+            Vector(1.0, 2.0, 3.0) x Vector(2.0, 3.0, 4.0) shouldEqual Vector(-1.0, 2.0, -1.0)
         }
         "length"{
             Vector(2.0, 3.0, 4.0).length() shouldEqual sqrt(4.0 + 9.0 + 16.0)

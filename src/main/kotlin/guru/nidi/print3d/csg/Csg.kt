@@ -8,61 +8,126 @@ class Csg(val polygons: List<Polygon>, n: Node?) {
     constructor(polygons: List<Polygon>) : this(polygons, null)
     constructor(node: Node) : this(node.allPolygons(), node)
 
+    fun translate(v: Vector) = AffineTransform().translate(v).applyTo(this)
+    fun scale(v: Vector) = AffineTransform().scale(v).applyTo(this)
+    fun rotateX(a: Double) = AffineTransform().rotateX(a).applyTo(this)
+    fun rotateY(a: Double) = AffineTransform().rotateY(a).applyTo(this)
+    fun rotateZ(a: Double) = AffineTransform().rotateZ(a).applyTo(this)
+
     infix fun union(csg: Csg): Csg {
         val a = node.clipTo(csg.node)
-        val b2 = csg.node.clipTo(a).invert().clipTo(a).invert()
+        val b2 = -(-csg.node.clipTo(a)).clipTo(a)
         return Csg(a.combine(b2))
     }
 
     operator fun plus(csg: Csg) = this union csg
+    infix fun or(csg: Csg) = this union csg
 
     infix fun subtract(csg: Csg): Csg {
-        val a = node.invert().clipTo(csg.node)
-        val b1 = csg.node.clipTo(a).invert().clipTo(a).invert()
-        return Csg(a.combine(b1).invert())
+        val a = (-node).clipTo(csg.node)
+        val b1 = -(-csg.node.clipTo(a)).clipTo(a)
+        return Csg(-a.combine(b1))
     }
 
     operator fun minus(csg: Csg) = this subtract csg
 
     infix fun intersect(csg: Csg): Csg {
-        val a = node.invert()
-        val b = csg.node.clipTo(a).invert()
+        val a = -node
+        val b = -csg.node.clipTo(a)
         val a1 = a.clipTo(b)
         val b2 = b.clipTo(a1)
-        return Csg(a1.combine(b2).invert())
+        return Csg(-a1.combine(b2))
     }
 
     operator fun times(csg: Csg) = this intersect csg
 
-    fun inverse() = Csg(polygons.map { it.flip() })
+    infix fun and(csg: Csg) = this intersect csg
+
+    infix fun xor(csg: Csg) = (this or csg) - (this and csg)
+
+    operator fun unaryMinus() = Csg(polygons.map { -it })
+
+    fun boundingBox(): Pair<Vector, Vector> {
+        var minX = Double.MAX_VALUE
+        var maxX = Double.MIN_VALUE
+        var minY = Double.MAX_VALUE
+        var maxY = Double.MIN_VALUE
+        var minZ = Double.MAX_VALUE
+        var maxZ = Double.MIN_VALUE
+        for (p in polygons) {
+            val b = p.boundingBox()
+            if (b.first.x < minX) minX = b.first.x
+            if (b.second.x > maxX) maxX = b.second.x
+            if (b.first.y < minY) minY = b.first.y
+            if (b.second.y > maxY) maxY = b.second.y
+            if (b.first.z < minZ) minZ = b.first.z
+            if (b.second.z > maxZ) maxZ = b.second.z
+        }
+        return Pair(Vector(minX, minY, minZ), Vector(maxX, maxY, maxZ))
+    }
+
+    fun size() = boundingBox().let { (it.second - it.first).abs() }
+
+    fun growLinear(value: Double) = growLinear(Vector(value, value, value))
+
+    fun growLinear(value: Vector): Csg {
+        val b = boundingBox()
+        val size = (b.second - b.first).abs()
+        val dist = b.first + size / 2.0
+        return AffineTransform().translate(dist).scale(unit + (value scaleInv size)).translate(-dist).applyTo(this)
+    }
 
     companion object {
 
     }
 }
 
-fun cube(center: Vector = Vector(1.0, 1.0, 1.0), radius: Vector = Vector(1.0, 1.0, 1.0),
-         props: Map<String, *> = mapOf<String, String>()): Csg {
-    return Csg(listOf(
-            listOf(listOf(0, 4, 6, 2), listOf(-1, 0, 0)),
-            listOf(listOf(1, 3, 7, 5), listOf(+1, 0, 0)),
-            listOf(listOf(0, 1, 5, 4), listOf(0, -1, 0)),
-            listOf(listOf(2, 6, 7, 3), listOf(0, +1, 0)),
-            listOf(listOf(0, 2, 3, 1), listOf(0, 0, -1)),
-            listOf(listOf(4, 5, 7, 6), listOf(0, 0, +1)))
-            .map { info ->
-                Polygon(info[0].map { i ->
-                    val pos = Vector(
-                            center.x + radius.x * (2 * (i and 1) - 1),
-                            center.y + radius.y * (2 * ((i shr 1) and 1) - 1),
-                            center.z + radius.z * (2 * ((i shr 2) and 1) - 1)
-                    )
-                    Vertex(pos, Vector(info[1][0].toDouble(), info[1][1].toDouble(), info[1][2].toDouble()))
-                }, props)
-            })
+fun cube(center: Vector = unit, radius: Vector = unit,
+         props: Map<String, *> = mapOf<String, String>()) = Csg(
+        listOf(
+                listOf(listOf(0, 4, 6, 2), listOf(-1, 0, 0)),
+                listOf(listOf(1, 3, 7, 5), listOf(+1, 0, 0)),
+                listOf(listOf(0, 1, 5, 4), listOf(0, -1, 0)),
+                listOf(listOf(2, 6, 7, 3), listOf(0, +1, 0)),
+                listOf(listOf(0, 2, 3, 1), listOf(0, 0, -1)),
+                listOf(listOf(4, 5, 7, 6), listOf(0, 0, +1)))
+                .map { info ->
+                    Polygon(info[0].map { i ->
+                        val pos = Vector(
+                                center.x + radius.x * (2 * (i and 1) - 1),
+                                center.y + radius.y * (2 * ((i shr 1) and 1) - 1),
+                                center.z + radius.z * (2 * ((i shr 2) and 1) - 1)
+                        )
+                        Vertex(pos, Vector(info[1][0].toDouble(), info[1][1].toDouble(), info[1][2].toDouble()))
+                    }, props)
+                })
+
+fun convexPrism(length: Double, vararg points: Vector, props: Map<String, *> = mapOf<String, String>()) =
+        convexPrism(length, points.toList(), props)
+
+fun convexPrism(length: Double, points: List<Vector>, props: Map<String, *> = mapOf<String, String>()): Csg {
+    val p = Plane.fromPoints(points[0], points[1], points[2])
+    if (points.any { it !in p }) throw IllegalArgumentException("not all points in a plane")
+
+    fun side(p1: Vector, p2: Vector) = Plane.fromPoints(p1, p2, p2 + p.normal * length).let { side ->
+        Polygon(props,
+                Vertex(p1, side.normal),
+                Vertex(p2, side.normal),
+                Vertex(p2 + p.normal * length, side.normal),
+                Vertex(p1 + p.normal * length, side.normal))
+    }
+
+    val polygons = listOf(
+            Polygon(points.reversed().map { Vertex(it, -p.normal) }, props),
+            Polygon(points.map { Vertex(it + p.normal * length, p.normal) }, props),
+            side(points[points.size - 1], points[0])) +
+            (0..points.size - 2).map { i ->
+                side(points[i], points[i + 1])
+            }
+    return Csg(polygons)
 }
 
-fun sphere(center: Vector = Vector(1.0, 1.0, 1.0), radius: Double = 1.0, slices: Int = 32, stacks: Int = 16,
+fun sphere(center: Vector = unit, radius: Double = 1.0, slices: Int = 32, stacks: Int = 16,
            radiusFunc: ((Double, Double) -> Double)? = null, props: Map<String, *> = mapOf<String, String>()): Csg {
     fun vertex(phi: Double, theta: Double): Vertex {
         val dir = Vector.ofSpherical(-1.0, theta * PI, phi * PI * 2)
@@ -90,8 +155,8 @@ fun cylinder(start: Vector = Vector(0.0, -1.0, 0.0), end: Vector = Vector(0.0, 1
     val ray = end - start
     val axisZ = ray.unit()
     val isY = if (abs(axisZ.y) > 0.5) 1.0 else 0.0
-    val axisX = (Vector(isY, 1.0 - isY, 0.0) cross axisZ).unit()
-    val axisY = (axisX cross axisZ).unit()
+    val axisX = (Vector(isY, 1.0 - isY, 0.0) x axisZ).unit()
+    val axisY = (axisX x axisZ).unit()
     val s = Vertex(start, -axisZ)
     val e = Vertex(end, axisZ.unit())
     fun point(stack: Double, slice: Double, normalBlend: Double): Vertex {
@@ -114,7 +179,7 @@ fun cylinder(start: Vector = Vector(0.0, -1.0, 0.0), end: Vector = Vector(0.0, 1
     return Csg(polygons)
 }
 
-fun ring(center: Vector = Vector(1.0, 1.0, 1.0), radius: Double = 1.0, r: Double = 1.0, h: Double = 1.0, slices: Int = 32): Csg {
+fun ring(center: Vector = unit, radius: Double = 1.0, r: Double = 1.0, h: Double = 1.0, slices: Int = 32): Csg {
     fun vertex(r: Double, a: Double, b: Double, norm: Vector) =
             Vertex(center + Vector.ofSpherical(r, b, a), norm)
 

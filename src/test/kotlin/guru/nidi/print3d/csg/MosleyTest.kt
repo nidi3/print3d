@@ -6,7 +6,7 @@ import java.io.File
 class MosleyTest : StringSpec() {
     init {
         "create" {
-            Model().apply {
+            model {
 
                 fun menger(r: Double, level: Int): Csg {
                     var c = cube(center = origin, radius = unit * r)
@@ -59,7 +59,7 @@ class MosleyTest : StringSpec() {
                     }
 
                     step(r, level)
-                    addToModel(c)
+                    add(c)
                     return c
                 }
 

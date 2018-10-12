@@ -7,7 +7,8 @@ class VertexTest : StringSpec() {
     init {
         "flip" {
             val pos = Vector(1.0, 2.0, 3.0)
-            Vertex(pos, Vector(4.0, 5.0, 6.0)).flip() shouldEqual Vertex(pos, Vector(-4.0, -5.0, -6.0))
+            val normal = Vector(4.0, 5.0, 6.0)
+            -Vertex(pos, normal) shouldEqual Vertex(pos, -normal)
         }
         "interpolate" {
             val a = Vertex(Vector(1.0, 2.0, 3.0), Vector(4.0, 5.0, 6.0))

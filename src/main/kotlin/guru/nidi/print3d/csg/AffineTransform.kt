@@ -49,3 +49,9 @@ class AffineTransform private constructor(val m00: Double, val m01: Double, val 
 
     fun applyTo(t: Csg) = Csg(t.polygons.map { applyTo(it) })
 }
+
+fun translate(v: Vector) = AffineTransform().translate(v)
+fun scale(v: Vector) = AffineTransform().scale(v)
+fun rotateX(a: Double) = AffineTransform().rotateX(a)
+fun rotateY(a: Double) = AffineTransform().rotateY(a)
+fun rotateZ(a: Double) = AffineTransform().rotateZ(a)
