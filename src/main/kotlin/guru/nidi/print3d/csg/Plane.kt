@@ -3,14 +3,14 @@ package guru.nidi.print3d.csg
 import guru.nidi.print3d.csg.Plane.Type.*
 import kotlin.math.abs
 
+private const val EPSILON = 1e-5
+
 data class Plane private constructor(val normal: Vector, private val w: Double) {
     private enum class Type(val i: Int) {
         COPLANAR(0), FRONT(1), BACK(2), SPANNING(3);
 
         infix fun or(t: Type) = values().find { it.i == i or t.i }!!
     }
-
-    private val EPSILON = 1e-5
 
     companion object {
         fun fromPoints(a: Vector, b: Vector, c: Vector): Plane {

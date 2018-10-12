@@ -76,10 +76,6 @@ class Csg(val polygons: List<Polygon>, n: Node?) {
         val dist = b.first + size / 2.0
         return AffineTransform().translate(dist).scale(unit + (value scaleInv size)).translate(-dist).applyTo(this)
     }
-
-    companion object {
-
-    }
 }
 
 fun cube(center: Vector = unit, radius: Vector = unit,
@@ -160,7 +156,7 @@ fun cylinder(start: Vector = Vector(0.0, -1.0, 0.0), end: Vector = Vector(0.0, 1
     val s = Vertex(start, -axisZ)
     val e = Vertex(end, axisZ.unit())
     fun point(stack: Double, slice: Double, normalBlend: Double): Vertex {
-        val angle = slice * PI * 2;
+        val angle = slice * PI * 2
         val out = axisX * cos(angle) + axisY * sin(angle)
         val pos = start + ray * stack + out * radius
         val normal = out * (1 - abs(normalBlend)) + axisZ * normalBlend
